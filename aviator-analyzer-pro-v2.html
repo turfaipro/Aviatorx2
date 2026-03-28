@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#05070F"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Aviator Analyzer Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════ */
+:root {
+  --bg:        #05070F;
+  --bg2:       #090C18;
+  --card:      #0D1221;
+  --card2:     #121929;
+  --card3:     #161E30;
+  --border:    rgba(255,255,255,0.065);
+  --border2:   rgba(255,255,255,0.1);
+  --green:     #00E676;
+  --green2:    #00BFA5;
+  --orange:    #FF9800;
+  --red:       #FF3D57;
+  --blue:      #4C8BF5;
+  --purple:    #9F7AEA;
+  --yellow:    #FFD600;
+  --text:      #DDE4F0;
+  --muted:     #3D4557;
+  --muted2:    #6B7280;
+  --radius:    14px;
+  --header-h: 58px;
+  --tab-h:    52px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animated grid */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    linear-gradient(rgba(0,230,118,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,230,118,0.022) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+}
+
+/* Top glow */
+body::after {
+  content: '';
+  position: fixed; top:-10%; left:50%; transform:translateX(-50%);
+  width:700px; height:350px;
+  background: radial-gradient(ellipse, rgba(0,230,118,0.055) 0%, transparent 68%);
+  pointer-events: none; z-index:0;
+}
+
+/* ═══════════════════════════════════════
+   HEADER
+═══════════════════════════════════════ */
+.app-header {
+  position: sticky; top:0; z-index:200;
+  height: var(--header-h);
+  background: rgba(5,7,15,0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.logo-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--green), var(--green2));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 0 20px rgba(0,230,118,0.3);
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 17px; font-weight: 700; letter-spacing: 1.5px;
+}
+.logo-text em { color: var(--green); font-style:normal; }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.plan-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; font-weight: 500; letter-spacing: 1.2px;
+  padding: 4px 11px; border-radius: 20px;
+  transition: all 0.3s;
+}
+.plan-free   { background:rgba(107,114,128,.15); color:var(--muted2); border:1px solid rgba(107,114,128,.35); }
+.plan-pro    { background:rgba(0,230,118,.12);   color:var(--green);  border:1px solid rgba(0,230,118,.35);  }
+.plan-vip    { background:rgba(255,214,0,.12);   color:var(--yellow); border:1px solid rgba(255,214,0,.35);  }
+
+.live-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--green);
+  background: rgba(0,230,118,.08); border:1px solid rgba(0,230,118,.2);
+  border-radius: 20px; padding: 4px 10px;
+}
+.live-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--green); box-shadow:0 0 6px var(--green);
+  animation: blink 1.8s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ═══════════════════════════════════════
+   TAB BAR
+═══════════════════════════════════════ */
+.tab-bar {
+  position: sticky; top: var(--header-h); z-index: 190;
+  height: var(--tab-h);
+  background: rgba(9,12,24,0.96);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: stretch;
+  padding: 0 8px; gap: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted2);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border-radius: 10px;
+  transition: all 0.2s;
+  padding: 6px 4px;
+  position: relative;
+}
+
+.tab-btn .tab-icon { font-size: 16px; line-height:1; }
+
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+
+.tab-btn.active {
+  color: var(--green);
+  background: rgba(0,230,118,.07);
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute; bottom: 0; left:20%; right:20%;
+  height: 2px; border-radius: 2px 2px 0 0;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+/* ═══════════════════════════════════════
+   PAGE CONTAINER
+═══════════════════════════════════════ */
+.page {
+  display: none;
+  position: relative; z-index: 1;
+  min-height: calc(100dvh - var(--header-h) - var(--tab-h));
+  padding: 16px 14px 80px;
+  animation: pageIn 0.25s ease;
+}
+
+.page.active { display: block; }
+
+@keyframes pageIn {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ═══════════════════════════════════════
+   SHARED COMPONENTS
+═══════════════════════════════════════ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--muted2);
+  text-transform: uppercase; letter-spacing: 1.4px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title .dot {
+  width:6px; height:6px; border-radius:50%;
+  animation: blink 2s infinite;
+}
+.section-title::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+
+/* Stat mini-cards */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 8px; margin-bottom: 12px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  position: relative; overflow: hidden;
+}
+
+.stat-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+}
+.stat-card.g::before { background:linear-gradient(90deg,transparent,var(--green),transparent); }
+.stat-card.o::before { background:linear-gradient(90deg,transparent,var(--orange),transparent); }
+.stat-card.b::before { background:linear-gradient(90deg,transparent,var(--blue),transparent); }
+.stat-card.r::before { background:linear-gradient(90deg,transparent,var(--red),transparent); }
+
+.stat-lbl { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+.stat-val { font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700; line-height:1; }
+.stat-sub { font-size:10px; color:var(--muted2); margin-top:3px; }
+
+/* ═══════════════════════════════════════
+   TAB 1 — MANUEL
+═══════════════════════════════════════ */
+.mult-input {
+  width:100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  resize: none; height: 72px; outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.mult-input:focus { border-color: var(--green); }
+.mult-input::placeholder { color: var(--muted); }
+
+.chips-row { display:flex; flex-wrap:wrap; gap:6px; margin: 10px 0; }
+
+.chip {
+  font-family:'DM Mono',monospace; font-size:11px;
+  padding:4px 11px; border-radius:20px;
+  cursor:pointer; border:1px solid var(--border);
+  background:var(--bg2); transition:all .15s; user-select:none;
+}
+.chip:active { transform:scale(.94); }
+.chip.g { color:var(--green); }
+.chip.o { color:var(--orange); }
+.chip.r { color:var(--red); }
+.chip.x { color:var(--red); }
+
+.hint { font-size:11px; color:var(--muted2); line-height:1.5; margin-top:6px; }
+
+/* ── PRIMARY BUTTON */
+.btn-primary {
+  width:100%; padding:15px;
+  background: linear-gradient(135deg, var(--green), var(--green2));
+  color:#000; border:none; border-radius:12px;
+  font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; position:relative; overflow:hidden;
+  transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-primary:disabled { background:var(--card2); color:var(--muted2); cursor:not-allowed; }
+.btn-primary:not(:disabled):active { transform:scale(.98); }
+
+.btn-primary::after {
+  content:''; position:absolute;
+  top:0; left:-100%; width:50%; height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  animation:shim 2.5s infinite;
+}
+.btn-primary:disabled::after { animation:none; }
+@keyframes shim { to { left:160%; } }
+
+/* ── DECISION CARD */
+.decision-card {
+  border-radius: var(--radius);
+  padding: 18px;
+  border: 2px solid transparent;
+  margin-bottom: 12px;
+  transition: all .4s;
+  position: relative; overflow: hidden;
+}
+.decision-card.idle { background:rgba(255,255,255,.02); border-color:var(--border); }
+.decision-card.play { background:linear-gradient(135deg,rgba(0,230,118,.1),rgba(0,191,165,.04)); border-color:rgba(0,230,118,.5); box-shadow:0 0 40px rgba(0,230,118,.07); }
+.decision-card.safe { background:linear-gradient(135deg,rgba(255,152,0,.1),rgba(255,152,0,.04)); border-color:rgba(255,152,0,.5); box-shadow:0 0 40px rgba(255,152,0,.07); }
+.decision-card.wait { background:linear-gradient(135deg,rgba(255,61,87,.08),rgba(255,61,87,.03)); border-color:rgba(255,61,87,.4); box-shadow:0 0 40px rgba(255,61,87,.06); }
+
+.decision-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+
+.d-main .d-icon { font-size:34px; display:block; margin-bottom:4px; }
+.d-main .d-label {
+  font-family:'Rajdhani',sans-serif; font-size:30px; font-weight:700;
+  letter-spacing:2.5px; text-transform:uppercase; line-height:1;
+}
+.d-main .d-sub { font-size:11px; color:var(--muted2); font-family:'DM Mono',monospace; margin-top:3px; }
+
+.score-ring {
+  width:64px; height:64px; border-radius:50%;
+  border:3px solid; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; flex-shrink:0;
+  transition: all .4s;
+}
+.score-ring .s-num { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; line-height:1; }
+.score-ring .s-lbl { font-family:'DM Mono',monospace; font-size:7px; color:var(--muted2); }
+
+.metrics-row {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:12px;
+}
+.met-box { background:rgba(0,0,0,.35); border-radius:8px; padding:10px 6px; text-align:center; }
+.met-box .mv { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700; display:block; line-height:1; margin-bottom:3px; }
+.met-box .ml { font-family:'DM Mono',monospace; font-size:7px; color:var(--muted2); text-transform:uppercase; letter-spacing:.5px; }
+
+.risk-row { display:flex; align-items:center; gap:10px; }
+.risk-txt { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); white-space:nowrap; }
+.risk-bar { flex:1; height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; }
+.risk-fill { height:100%; border-radius:2px; transition:width 1s cubic-bezier(.16,1,.3,1); }
+.risk-pct { font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; }
+
+/* Chart */
+.chart-wrap { height:150px; position:relative; }
+
+/* Simulation */
+.sim-row { display:flex; gap:8px; align-items:flex-end; margin-bottom:10px; }
+.sim-field { flex:1; }
+.sim-field label { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:.8px; }
+.sim-input {
+  width:100%; background:var(--bg2); border:1px solid var(--border);
+  border-radius:8px; padding:9px 12px; color:var(--text);
+  font-family:'DM Mono',monospace; font-size:12px; outline:none;
+  -webkit-appearance:none;
+}
+.btn-sim {
+  padding:9px 16px; background:rgba(76,139,245,.12);
+  border:1px solid rgba(76,139,245,.3); border-radius:8px;
+  color:var(--blue); font-family:'Rajdhani',sans-serif; font-size:13px;
+  font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  transition:all .2s; white-space:nowrap;
+}
+.btn-sim:active { transform:scale(.97); }
+
+.sim-boxes { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.sim-box { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:10px 6px; text-align:center; }
+.sim-box .sv { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700; }
+.sim-box .sl { font-family:'DM Mono',monospace; font-size:8px; color:var(--muted2); text-transform:uppercase; }
+
+/* History */
+.hist-list { display:flex; flex-direction:column; gap:5px; max-height:220px; overflow-y:auto; }
+.hist-list::-webkit-scrollbar { width:3px; }
+.hist-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.hist-item {
+  display:flex; align-items:center; gap:8px;
+  padding:9px 11px; background:var(--bg2);
+  border:1px solid var(--border); border-radius:8px;
+  animation: fadeSlide .3s ease;
+}
+@keyframes fadeSlide { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
+
+.hist-badge {
+  font-family:'DM Mono',monospace; font-size:8px; font-weight:700;
+  padding:2px 7px; border-radius:4px; text-transform:uppercase; white-space:nowrap;
+}
+.hb-play { background:rgba(0,230,118,.12); color:var(--green); }
+.hb-safe { background:rgba(255,152,0,.12); color:var(--orange); }
+.hb-wait { background:rgba(255,61,87,.12); color:var(--red); }
+
+.hist-vals { flex:1; font-family:'DM Mono',monospace; font-size:10px; color:var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hist-time { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); }
+
+/* Referral */
+.ref-card {
+  background: linear-gradient(135deg, rgba(255,214,0,.07), rgba(255,152,0,.04));
+  border:1px solid rgba(255,214,0,.18); border-radius:var(--radius); padding:14px;
+  margin-bottom:12px;
+}
+.ref-title { font-family:'DM Mono',monospace; font-size:9px; color:var(--yellow); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:10px; }
+.ref-code-row { display:flex; gap:7px; margin-bottom:10px; }
+.ref-code { flex:1; background:rgba(255,214,0,.06); border:1px solid rgba(255,214,0,.2); border-radius:8px; padding:9px 12px; color:var(--yellow); font-family:'DM Mono',monospace; font-size:13px; font-weight:700; letter-spacing:2px; }
+.btn-copy { padding:9px 13px; background:rgba(255,214,0,.08); border:1px solid rgba(255,214,0,.25); border-radius:8px; color:var(--yellow); font-size:14px; cursor:pointer; transition:all .2s; }
+.btn-copy:active { transform:scale(.94); }
+.ref-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.ref-stat { background:rgba(0,0,0,.25); border-radius:8px; padding:8px; text-align:center; }
+.ref-stat .rv { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; color:var(--yellow); }
+.ref-stat .rl { font-family:'DM Mono',monospace; font-size:8px; color:var(--muted2); text-transform:uppercase; }
+
+/* Upgrade banner */
+.upgrade-banner {
+  background: linear-gradient(135deg, rgba(139,92,246,.12), rgba(76,139,245,.07));
+  border:1px solid rgba(139,92,246,.28); border-radius:var(--radius);
+  padding:18px; text-align:center; margin-bottom:12px;
+}
+.upgrade-banner h3 { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; letter-spacing:1px; margin-bottom:4px; }
+.upgrade-banner p { font-size:12px; color:var(--muted2); margin-bottom:14px; line-height:1.6; }
+.btn-upgrade {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:12px 22px; background:linear-gradient(135deg,#8B5CF6,#6D28D9);
+  color:#fff; border:none; border-radius:10px;
+  font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  transition:all .2s;
+}
+.btn-upgrade:active { transform:scale(.97); }
+
+/* ═══════════════════════════════════════
+   TAB 2 — SCREENSHOT / OCR
+═══════════════════════════════════════ */
+
+/* Input method switcher */
+.method-switch {
+  display:flex; gap:6px; margin-bottom:14px;
+  background:var(--bg2); border-radius:12px; padding:4px;
+}
+.method-btn {
+  flex:1; padding:9px 6px; border-radius:9px; border:none;
+  background:none; color:var(--muted2);
+  font-family:'Rajdhani',sans-serif; font-size:12px; font-weight:600;
+  letter-spacing:.7px; text-transform:uppercase;
+  cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:5px;
+}
+.method-btn.active { background:var(--card); color:var(--green); box-shadow:0 2px 8px rgba(0,0,0,.4); }
+
+/* Upload zone */
+.upload-zone {
+  border:2px dashed rgba(0,230,118,.18);
+  border-radius:var(--radius); padding:28px 16px;
+  text-align:center; cursor:pointer;
+  transition:all .3s; margin-bottom:12px;
+  background:linear-gradient(135deg,rgba(0,230,118,.02),rgba(0,191,165,.01));
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color:var(--green); background:rgba(0,230,118,.05);
+}
+.upload-zone.has-file { border-style:solid; border-color:rgba(0,230,118,.4); padding:0; }
+
+.upload-icon-big { font-size:38px; margin-bottom:10px; display:block; }
+.upload-title { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:600; letter-spacing:.8px; margin-bottom:4px; }
+.upload-sub { font-size:12px; color:var(--muted2); line-height:1.6; margin-bottom:14px; }
+
+.upload-btns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+
+.btn-gal {
+  display:flex; align-items:center; gap:6px;
+  padding:10px 18px; background:linear-gradient(135deg,var(--green),var(--green2));
+  color:#000; border:none; border-radius:9px;
+  font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700;
+  letter-spacing:.8px; text-transform:uppercase; cursor:pointer;
+  transition:all .2s;
+}
+.btn-gal:active { transform:scale(.96); }
+
+.btn-cam {
+  display:flex; align-items:center; gap:6px;
+  padding:10px 18px; background:rgba(76,139,245,.1);
+  border:1px solid rgba(76,139,245,.3); border-radius:9px;
+  color:var(--blue); font-family:'Rajdhani',sans-serif; font-size:13px;
+  font-weight:700; letter-spacing:.8px; text-transform:uppercase; cursor:pointer;
+  transition:all .2s;
+}
+.btn-cam:active { transform:scale(.96); }
+
+#fileInput, #cameraInput { display:none; }
+
+/* Preview */
+.preview-wrap { display:none; position:relative; border-radius:var(--radius); overflow:hidden; }
+.preview-img { width:100%; max-height:260px; object-fit:contain; display:block; border-radius:var(--radius); background:var(--bg2); }
+.preview-overlay {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.55); opacity:0; transition:opacity .2s; border-radius:var(--radius);
+}
+.preview-wrap:hover .preview-overlay { opacity:1; }
+.btn-change { padding:9px 18px; background:rgba(0,0,0,.8); border:1px solid var(--border); color:var(--text); border-radius:8px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600; cursor:pointer; }
+
+/* Processing */
+.processing-card {
+  display:none; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:24px 16px; text-align:center;
+  margin-bottom:12px;
+}
+.processing-card.show { display:block; }
+
+.spin-wrap { width:52px; height:52px; position:relative; margin:0 auto 14px; }
+.spin-ring {
+  position:absolute; inset:0; border-radius:50%;
+  border:2px solid transparent;
+}
+.sr1 { border-top-color:var(--green); animation:sp 1s linear infinite; }
+.sr2 { border-right-color:rgba(0,230,118,.35); inset:8px; animation:sp 1.6s linear infinite reverse; }
+.sr3 { border-bottom-color:rgba(0,230,118,.15); inset:16px; animation:sp 2.2s linear infinite; }
+@keyframes sp { to{transform:rotate(360deg)} }
+.spin-center { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:16px; }
+
+.proc-title { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:600; letter-spacing:.8px; margin-bottom:4px; }
+.proc-sub { font-size:11px; color:var(--muted2); margin-bottom:14px; }
+
+.steps-list { display:flex; flex-direction:column; gap:5px; text-align:left; max-width:280px; margin:0 auto; }
+.step {
+  display:flex; align-items:center; gap:9px;
+  font-family:'DM Mono',monospace; font-size:10px; color:var(--muted);
+  transition:color .3s;
+}
+.step.on  { color:var(--green); }
+.step.ok  { color:var(--muted2); }
+.step-num {
+  width:16px; height:16px; border-radius:50%; border:1px solid var(--muted);
+  display:flex; align-items:center; justify-content:center;
+  font-size:8px; flex-shrink:0; transition:all .3s;
+}
+.step.on .step-num { border-color:var(--green); color:var(--green); box-shadow:0 0 6px rgba(0,230,118,.4); }
+.step.ok .step-num { background:rgba(0,230,118,.1); border-color:rgba(0,230,118,.3); color:var(--green); }
+
+/* Error card */
+.error-card {
+  display:none; background:rgba(255,61,87,.05);
+  border:1px solid rgba(255,61,87,.25); border-radius:var(--radius);
+  padding:18px; text-align:center; margin-bottom:12px;
+}
+.error-card.show { display:block; }
+.error-card .ei { font-size:28px; margin-bottom:6px; }
+.error-card .et { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:600; color:var(--red); margin-bottom:4px; }
+.error-card .em { font-size:12px; color:var(--muted2); line-height:1.6; }
+
+/* OCR Result */
+.ocr-result { display:none; }
+.ocr-result.show { display:block; }
+
+.ocr-meta-bar {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px; margin-bottom:10px;
+}
+.ocr-conf-wrap { display:flex; align-items:center; gap:8px; font-family:'DM Mono',monospace; font-size:10px; color:var(--muted2); }
+.conf-bar { width:70px; height:3px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; }
+.conf-fill { height:100%; border-radius:2px; transition:width .8s ease; }
+.model-tag { font-family:'DM Mono',monospace; font-size:9px; padding:3px 9px; border-radius:6px; background:rgba(159,122,234,.1); border:1px solid rgba(159,122,234,.2); color:var(--purple); }
+
+/* Detected chips */
+.detected-chips { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
+.d-chip {
+  font-family:'DM Mono',monospace; font-size:11px;
+  padding:4px 11px; border-radius:7px; border:1px solid;
+  cursor:pointer; transition:all .15s; user-select:none;
+}
+.d-chip:active { transform:scale(.93); }
+.d-chip.low  { background:rgba(0,230,118,.08);  color:var(--green);  border-color:rgba(0,230,118,.3); }
+.d-chip.med  { background:rgba(255,152,0,.08);  color:var(--orange); border-color:rgba(255,152,0,.3); }
+.d-chip.high { background:rgba(255,61,87,.08);  color:var(--red);    border-color:rgba(255,61,87,.3); }
+.d-chip.excl { opacity:.3; text-decoration:line-through; pointer-events:none; }
+
+.chips-info { display:flex; align-items:center; justify-content:space-between; }
+.chips-count { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); }
+.chips-count span { color:var(--green); }
+.btn-edit { padding:4px 11px; background:rgba(76,139,245,.1); border:1px solid rgba(76,139,245,.25); border-radius:6px; color:var(--blue); font-family:'DM Mono',monospace; font-size:9px; cursor:pointer; transition:all .2s; }
+
+.raw-edit {
+  display:none; width:100%; background:var(--bg2);
+  border:1px solid rgba(0,230,118,.2); border-radius:8px;
+  padding:9px 12px; color:var(--text); font-family:'DM Mono',monospace;
+  font-size:11px; resize:vertical; min-height:52px; outline:none;
+  margin-top:8px; transition:border-color .2s;
+}
+.raw-edit:focus { border-color:var(--green); }
+.raw-edit.show { display:block; }
+
+/* Tips row */
+.tips-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+@media(max-width:420px) { .tips-row { grid-template-columns:1fr; } }
+.tip-item { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; gap:8px; align-items:flex-start; }
+.tip-item .ti { font-size:16px; flex-shrink:0; }
+.tip-item h4 { font-family:'Rajdhani',sans-serif; font-size:12px; font-weight:600; margin-bottom:2px; }
+.tip-item p { font-size:10px; color:var(--muted2); line-height:1.5; }
+
+/* Reanalyze / new scan buttons */
+.btn-ghost {
+  width:100%; padding:12px; margin-bottom:8px;
+  background:rgba(0,230,118,.06); border:1px solid rgba(0,230,118,.2); border-radius:10px;
+  color:var(--green); font-family:'Rajdhani',sans-serif; font-size:14px;
+  font-weight:600; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  transition:all .2s;
+}
+.btn-ghost:hover { background:rgba(0,230,118,.1); }
+.btn-ghost:active { transform:scale(.98); }
+
+.btn-outline {
+  width:100%; padding:12px;
+  background:transparent; border:1px solid var(--border); border-radius:10px;
+  color:var(--muted2); font-family:'Rajdhani',sans-serif; font-size:14px;
+  font-weight:600; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  transition:all .2s;
+}
+.btn-outline:hover { border-color:var(--muted2); color:var(--text); }
+
+/* ═══════════════════════════════════════
+   TAB 3 — SIMULATION
+═══════════════════════════════════════ */
+.sim-chart-wrap { height:160px; position:relative; margin-bottom:8px; }
+
+.sim-result-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
+.sim-stat {
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+  padding:12px; text-align:center;
+}
+.sim-stat .ssv { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; }
+.sim-stat .ssl { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); text-transform:uppercase; letter-spacing:.6px; margin-top:2px; }
+
+/* ═══════════════════════════════════════
+   MODAL UPGRADE
+═══════════════════════════════════════ */
+.modal-bg {
+  position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,.82); backdrop-filter:blur(10px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.modal-bg.open { opacity:1; pointer-events:all; }
+
+.modal {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px 20px 0 0; padding:24px 18px 36px;
+  width:100%; max-width:480px;
+  transform:translateY(40px); transition:transform .35s cubic-bezier(.16,1,.3,1);
+}
+.modal-bg.open .modal { transform:translateY(0); }
+
+.modal-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 20px; }
+.modal-title { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; letter-spacing:1.2px; text-align:center; margin-bottom:4px; }
+.modal-sub { font-size:12px; color:var(--muted2); text-align:center; margin-bottom:20px; }
+
+.plans-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.plan-card {
+  border-radius:12px; padding:14px; border:2px solid var(--border);
+  cursor:pointer; transition:all .2s; text-align:center;
+}
+.plan-card:active { transform:scale(.97); }
+.plan-card.sel-pro { border-color:var(--green); background:rgba(0,230,118,.08); }
+.plan-card.sel-vip { border-color:var(--yellow); background:rgba(255,214,0,.08); }
+.plan-card .pn { font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; letter-spacing:1px; margin-bottom:3px; }
+.plan-card .pp { font-family:'DM Mono',monospace; font-size:16px; font-weight:700; margin-bottom:8px; }
+.plan-card .pf { font-size:10px; color:var(--muted2); line-height:1.7; }
+
+.pay-methods { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:14px; }
+.pay-chip { font-family:'DM Mono',monospace; font-size:9px; padding:3px 10px; border-radius:6px; background:var(--bg2); border:1px solid var(--border); color:var(--muted2); }
+
+.btn-pay {
+  width:100%; padding:14px;
+  background:linear-gradient(135deg,#8B5CF6,#6D28D9);
+  color:#fff; border:none; border-radius:11px;
+  font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase; cursor:pointer;
+  transition:all .2s;
+}
+.btn-pay:active { transform:scale(.98); }
+
+/* ═══════════════════════════════════════
+   TOAST
+═══════════════════════════════════════ */
+.toast {
+  position:fixed; bottom:70px; left:50%;
+  transform:translateX(-50%) translateY(30px);
+  background:var(--card2); border:1px solid var(--border2);
+  border-radius:10px; padding:9px 18px;
+  font-family:'DM Mono',monospace; font-size:11px;
+  z-index:400; opacity:0; transition:all .3s; white-space:nowrap;
+  pointer-events:none;
+}
+.toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+.toast.ok  { border-color:var(--green); color:var(--green); }
+.toast.err { border-color:var(--red);   color:var(--red);   }
+.toast.inf { border-color:var(--blue);  color:var(--blue);  }
+
+/* ═══════════════════════════════════════
+   SPINNER inline
+═══════════════════════════════════════ */
+.spin-inline {
+  display:inline-block; width:13px; height:13px;
+  border:2px solid rgba(0,0,0,.2); border-top-color:#000;
+  border-radius:50%; animation:sp .7s linear infinite; vertical-align:middle;
+}
+
+/* scroll custom */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="app-header">
+  <div class="logo">
+    <div class="logo-mark">✈</div>
+    <div class="logo-text">AVIATOR <em>PRO</em></div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+    <span class="plan-pill plan-free" id="planPill">FREE</span>
+  </div>
+</header>
+
+<!-- ═══ TAB BAR ═══ -->
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="manual" onclick="switchTab('manual',this)">
+    <span class="tab-icon">⌨️</span>Manuel
+  </button>
+  <button class="tab-btn" data-tab="screenshot" onclick="switchTab('screenshot',this)">
+    <span class="tab-icon">📸</span>Capture
+  </button>
+  <button class="tab-btn" data-tab="simulation" onclick="switchTab('simulation',this)">
+    <span class="tab-icon">📊</span>Simulation
+  </button>
+  <button class="tab-btn" data-tab="compte" onclick="switchTab('compte',this)">
+    <span class="tab-icon">👤</span>Compte
+  </button>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PAGE 1 — SAISIE MANUELLE
+══════════════════════════════════════ -->
+<div class="page active" id="page-manual">
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card g"><div class="stat-lbl">Analyses</div><div class="stat-val" id="s1" style="color:var(--green)">0</div><div class="stat-sub" id="s1sub">sur 5 restantes</div></div>
+    <div class="stat-card o"><div class="stat-lbl">Succès</div><div class="stat-val" id="s2" style="color:var(--orange)">—</div><div class="stat-sub">dernières</div></div>
+    <div class="stat-card b"><div class="stat-lbl">Cashout</div><div class="stat-val" id="s3" style="color:var(--blue)">—</div><div class="stat-sub">conseillé</div></div>
+    <div class="stat-card r"><div class="stat-lbl">Risque</div><div class="stat-val" id="s4" style="color:var(--muted2)">—</div><div class="stat-sub">score global</div></div>
+  </div>
+
+  <!-- Input -->
+  <div class="card">
+    <div class="section-title"><span class="dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></span>Multiplicateurs</div>
+    <textarea class="mult-input" id="multIn" placeholder="Ex: 1.2, 3.5, 1.8, 12.4, 2.1, 4.2, 2.8"></textarea>
+    <div class="chips-row">
+      <span class="chip g" onclick="addM(1.2)">×1.2</span>
+      <span class="chip g" onclick="addM(1.5)">×1.5</span>
+      <span class="chip g" onclick="addM(2.0)">×2.0</span>
+      <span class="chip o" onclick="addM(3.5)">×3.5</span>
+      <span class="chip o" onclick="addM(5.0)">×5.0</span>
+      <span class="chip r" onclick="addM(10.0)">×10</span>
+      <span class="chip r" onclick="addM(20.0)">×20</span>
+      <span class="chip x" onclick="document.getElementById('multIn').value=''">✕</span>
+    </div>
+    <div class="hint">💡 Entrez 10–30 derniers multiplicateurs pour plus de précision</div>
+  </div>
+
+  <button class="btn-primary" id="btnAnalyze" onclick="runManual()">⚡ ANALYSER</button>
+
+  <!-- Decision -->
+  <div class="decision-card idle" id="decCard">
+    <div class="decision-header">
+      <div class="d-main">
+        <span class="d-icon" id="dIcon">⏳</span>
+        <div class="d-label" id="dLabel">EN ATTENTE</div>
+        <div class="d-sub" id="dSub">Entrez des multiplicateurs</div>
+      </div>
+      <div class="score-ring" id="scoreRing" style="border-color:var(--muted)">
+        <span class="s-num" id="sNum">—</span>
+        <span class="s-lbl">SCORE</span>
+      </div>
+    </div>
+    <div class="metrics-row" id="metRow" style="display:none">
+      <div class="met-box"><span class="mv" id="m1">—</span><span class="ml">Mise %</span></div>
+      <div class="met-box"><span class="mv" id="m2">—</span><span class="ml">Cashout</span></div>
+      <div class="met-box"><span class="mv" id="m3">—</span><span class="ml">Volatilité</span></div>
+      <div class="met-box"><span class="mv" id="m4">—</span><span class="ml">Streak</span></div>
+    </div>
+    <div class="risk-row" id="riskRow" style="display:none">
+      <span class="risk-txt">Risque</span>
+      <div class="risk-bar"><div class="risk-fill" id="rFill" style="width:0%"></div></div>
+      <span class="risk-pct" id="rPct">—</span>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card">
+    <div class="section-title"><span class="dot" style="background:var(--blue);box-shadow:0 0 6px var(--blue)"></span>Courbe</div>
+    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <div class="section-title"><span class="dot" style="background:var(--orange);box-shadow:0 0 6px var(--orange)"></span>Historique</div>
+    <div class="hist-list" id="histList">
+      <div style="text-align:center;color:var(--muted2);font-family:'DM Mono',monospace;font-size:11px;padding:16px">Aucune analyse</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 2 — SCREENSHOT / OCR
+══════════════════════════════════════ -->
+<div class="page" id="page-screenshot">
+
+  <!-- Tips -->
+  <div class="tips-row">
+    <div class="tip-item"><span class="ti">📱</span><div><h4>Capture Android</h4><p>Volume— + Power simultanément</p></div></div>
+    <div class="tip-item"><span class="ti">🎯</span><div><h4>Zone à capturer</h4><p>L'historique des multiplicateurs</p></div></div>
+    <div class="tip-item"><span class="ti">💡</span><div><h4>Meilleure qualité</h4><p>Bonne luminosité, texte net</p></div></div>
+  </div>
+
+  <!-- Upload zone -->
+  <div class="upload-zone" id="uploadZone">
+    <div id="uploadEmpty">
+      <span class="upload-icon-big">🖼️</span>
+      <div class="upload-title">Importer une capture</div>
+      <div class="upload-sub">Screenshot Aviator depuis votre galerie<br/>ou prenez une photo directement</div>
+      <div class="upload-btns">
+        <button class="btn-gal" onclick="document.getElementById('fileInput').click()">🖼️ Galerie</button>
+        <button class="btn-cam" onclick="document.getElementById('cameraInput').click()">📷 Caméra</button>
+      </div>
+    </div>
+    <div class="preview-wrap" id="previewWrap">
+      <img class="preview-img" id="previewImg" src="" alt=""/>
+      <div class="preview-overlay"><button class="btn-change" onclick="resetImg()">🔄 Changer</button></div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput"   accept="image/*"                    onchange="handleImg(this)"/>
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleImg(this)"/>
+
+  <!-- Scan button -->
+  <button class="btn-primary" id="btnScan" onclick="runOCR()" disabled style="margin-bottom:12px">
+    🔍 EXTRAIRE ET ANALYSER
+  </button>
+
+  <!-- Processing -->
+  <div class="processing-card" id="procCard">
+    <div class="spin-wrap">
+      <div class="spin-ring sr1"></div>
+      <div class="spin-ring sr2"></div>
+      <div class="spin-ring sr3"></div>
+      <div class="spin-center">🔍</div>
+    </div>
+    <div class="proc-title">Analyse en cours…</div>
+    <div class="proc-sub">Claude Vision scanne votre capture</div>
+    <div class="steps-list">
+      <div class="step" id="ps1"><div class="step-num">1</div>Envoi image à Claude Vision</div>
+      <div class="step" id="ps2"><div class="step-num">2</div>Détection des multiplicateurs</div>
+      <div class="step" id="ps3"><div class="step-num">3</div>Validation et extraction OCR</div>
+      <div class="step" id="ps4"><div class="step-num">4</div>Calcul analyse IA Aviator</div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-card" id="errCard">
+    <div class="ei">⚠️</div>
+    <div class="et">Extraction échouée</div>
+    <div class="em" id="errMsg">Impossible de détecter des multiplicateurs.</div>
+  </div>
+
+  <!-- OCR Results -->
+  <div class="ocr-result" id="ocrResult">
+
+    <!-- OCR meta -->
+    <div class="ocr-meta-bar">
+      <div class="ocr-conf-wrap">
+        Confiance :
+        <div class="conf-bar"><div class="conf-fill" id="confFill" style="width:0%"></div></div>
+        <strong id="confVal" style="color:var(--green)">—</strong>
+      </div>
+      <span class="model-tag">Claude Vision</span>
+    </div>
+
+    <!-- Chips détectées -->
+    <div class="card">
+      <div class="section-title"><span class="dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></span>Multiplicateurs détectés</div>
+      <div class="detected-chips" id="detectedChips"></div>
+      <div class="chips-info">
+        <span class="chips-count"><span id="chipCount">0</span> valeurs · tap pour exclure</span>
+        <button class="btn-edit" id="btnEdit" onclick="toggleEditMode()">✏️ Éditer</button>
+      </div>
+      <textarea class="raw-edit" id="rawEdit" placeholder="Modifiez les valeurs…"></textarea>
+    </div>
+
+    <!-- Decision OCR (shared component) -->
+    <div class="decision-card idle" id="ocrDecCard">
+      <div class="decision-header">
+        <div class="d-main">
+          <span class="d-icon" id="ocrDIcon">⏳</span>
+          <div class="d-label" id="ocrDLabel">ANALYSE…</div>
+          <div class="d-sub" id="ocrDSub">Calcul en cours</div>
+        </div>
+        <div class="score-ring" id="ocrScoreRing" style="border-color:var(--muted)">
+          <span class="s-num" id="ocrSNum">—</span>
+          <span class="s-lbl">SCORE</span>
+        </div>
+      </div>
+      <div class="metrics-row">
+        <div class="met-box"><span class="mv" id="om1">—</span><span class="ml">Mise %</span></div>
+        <div class="met-box"><span class="mv" id="om2">—</span><span class="ml">Cashout</span></div>
+        <div class="met-box"><span class="mv" id="om3">—</span><span class="ml">Volatilité</span></div>
+        <div class="met-box"><span class="mv" id="om4">—</span><span class="ml">Streak</span></div>
+      </div>
+      <div class="risk-row">
+        <span class="risk-txt">Risque</span>
+        <div class="risk-bar"><div class="risk-fill" id="ocrRFill" style="width:0%"></div></div>
+        <span class="risk-pct" id="ocrRPct">—</span>
+      </div>
+    </div>
+
+    <button class="btn-ghost" onclick="reanalyzeOCR()">🔄 Recalculer après modification</button>
+    <button class="btn-outline" onclick="resetImg();document.getElementById('ocrResult').classList.remove('show')">📷 Nouvelle capture</button>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 3 — SIMULATION
+══════════════════════════════════════ -->
+<div class="page" id="page-simulation">
+
+  <div class="card">
+    <div class="section-title"><span class="dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></span>Paramètres Monte Carlo</div>
+    <div class="sim-row">
+      <div class="sim-field"><label>Parties</label><input class="sim-input" type="number" id="simN" value="200" min="10" max="1000"/></div>
+      <div class="sim-field"><label>Mise (FCFA)</label><input class="sim-input" type="number" id="simStake" value="5000" min="100"/></div>
+      <div class="sim-field"><label>Cashout ×</label><input class="sim-input" type="number" id="simCO" value="2.0" min="1.1" step="0.1"/></div>
+    </div>
+    <button class="btn-sim" style="width:100%;padding:12px" onclick="runSim()">▶ LANCER SIMULATION</button>
+  </div>
+
+  <div class="sim-result-grid" id="simGrid" style="display:none">
+    <div class="sim-stat"><div class="ssv" id="simGain" style="color:var(--green)">—</div><div class="ssl">Gain net moyen</div></div>
+    <div class="sim-stat"><div class="ssv" id="simPerte" style="color:var(--red)">—</div><div class="ssl">Perte maximale</div></div>
+    <div class="sim-stat"><div class="ssv" id="simProba" style="color:var(--orange)">—</div><div class="ssl">Taux de succès</div></div>
+    <div class="sim-stat"><div class="ssv" id="simROI" style="color:var(--blue)">—</div><div class="ssl">ROI estimé</div></div>
+  </div>
+
+  <div class="card" id="simChartCard" style="display:none">
+    <div class="section-title"><span class="dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></span>Courbe de capital</div>
+    <div class="sim-chart-wrap"><canvas id="simChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><span class="dot" style="background:var(--yellow);box-shadow:0 0 6px var(--yellow)"></span>Stratégies conseillées</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:var(--bg2);border-radius:10px;padding:12px;border:1px solid var(--border)">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;margin-bottom:3px;color:var(--green)">Conservatrice — Cashout ×1.5</div>
+        <div style="font-size:11px;color:var(--muted2)">Mise 1–2% · Probabilité de gain ~60% · Faible variance</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:10px;padding:12px;border:1px solid var(--border)">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;margin-bottom:3px;color:var(--orange)">Équilibrée — Cashout ×2.0</div>
+        <div style="font-size:11px;color:var(--muted2)">Mise 2–3% · Probabilité ~48% · Gains plus élevés</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:10px;padding:12px;border:1px solid var(--border)">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;margin-bottom:3px;color:var(--red)">Agressive — Cashout ×5.0</div>
+        <div style="font-size:11px;color:var(--muted2)">Mise 1% · Probabilité ~30% · Gains × 5 possible</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 4 — COMPTE
+══════════════════════════════════════ -->
+<div class="page" id="page-compte">
+
+  <div class="upgrade-banner">
+    <div style="font-size:30px;margin-bottom:8px">🚀</div>
+    <h3>Passez <span style="color:var(--purple)">PRO</span></h3>
+    <p>Analyses illimitées · OCR illimité · Simulation avancée<br/>Alertes SMS · Bot Telegram · Support prioritaire</p>
+    <button class="btn-upgrade" onclick="openModal()">⚡ 5 000 FCFA / mois</button>
+  </div>
+
+  <div class="ref-card">
+    <div class="ref-title">🏆 Parrainage — 30% commission</div>
+    <div class="ref-code-row">
+      <div class="ref-code" id="refCode">AVIO-7K2X9</div>
+      <button class="btn-copy" onclick="copyRef()">📋</button>
+    </div>
+    <div class="ref-stats">
+      <div class="ref-stat"><div class="rv" id="refF">0</div><div class="rl">Filleuls</div></div>
+      <div class="ref-stat"><div class="rv" id="refE">0 F</div><div class="rl">Gagné</div></div>
+      <div class="ref-stat"><div class="rv" id="refP">0 F</div><div class="rl">En attente</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><span class="dot" style="background:var(--muted2)"></span>Mon compte</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--muted2);font-family:'DM Mono',monospace">Plan actuel</span>
+        <span class="plan-pill plan-free" id="acctPlan">FREE</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--muted2);font-family:'DM Mono',monospace">Analyses aujourd'hui</span>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green)" id="acctAnl">0 / 5</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--muted2);font-family:'DM Mono',monospace">OCR captures</span>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green)" id="acctOCR">0 / 3</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0">
+        <span style="font-size:12px;color:var(--muted2);font-family:'DM Mono',monospace">Version</span>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted2)">1.0.0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="text-align:center;padding:20px">
+    <div style="font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;line-height:1.8">
+      ⚠️ Cet outil fournit des <strong style="color:var(--text)">analyses statistiques uniquement</strong><br/>
+      Il ne garantit aucun gain · Jouez de manière responsable<br/>
+      <span style="color:var(--green)">© Akili Digital 2025</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ MODAL UPGRADE ═══ -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✈ AVIATOR <span style="color:var(--purple)">PRO</span></div>
+    <div class="modal-sub">Choisissez votre plan et payez en Mobile Money</div>
+    <div class="plans-grid">
+      <div class="plan-card sel-pro" id="cardPro" onclick="selPlan('pro')">
+        <div class="pn" style="color:var(--green)">PRO</div>
+        <div class="pp" style="color:var(--green)">5 000 F</div>
+        <div class="pf">Analyses illimitées<br>OCR illimité<br>Alertes SMS<br>Export CSV</div>
+      </div>
+      <div class="plan-card" id="cardVip" onclick="selPlan('vip')">
+        <div style="font-size:9px;color:var(--purple);font-family:'DM Mono',monospace;margin-bottom:4px">⭐ RECOMMANDÉ</div>
+        <div class="pn" style="color:var(--yellow)">VIP</div>
+        <div class="pp" style="color:var(--yellow)">12 000 F</div>
+        <div class="pf">Tout PRO inclus<br>Bot Telegram<br>Signaux temps réel<br>Coaching stratégie</div>
+      </div>
+    </div>
+    <div class="pay-methods">
+      <span class="pay-chip">📱 Orange Money</span>
+      <span class="pay-chip">📱 MTN MoMo</span>
+      <span class="pay-chip">📱 Wave</span>
+      <span class="pay-chip">₿ Crypto</span>
+    </div>
+    <button class="btn-pay" onclick="doPay()">💳 PAYER VIA CHARIOW</button>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);text-align:center;margin-top:10px">Paiement sécurisé · Activation instantanée</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+const STATE = {
+  plan:        'free',
+  analyses:    0,
+  ocrCount:    0,
+  maxAnalyses: 5,
+  maxOCR:      3,
+  history:     [],
+  imgB64:      null,
+  imgType:     'image/jpeg',
+  ocrMults:    [],
+  excluded:    new Set(),
+  editMode:    false,
+  selectedPlan:'pro',
+};
+
+/* ══════════════════════════════════════════
+   TAB NAVIGATION
+══════════════════════════════════════════ */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('page-' + name).classList.add('active');
+}
+
+/* ══════════════════════════════════════════
+   ALGO V2 (partagé manuel + OCR)
+══════════════════════════════════════════ */
+function algoV2(mults) {
+  if (!mults || mults.length < 2) return null;
+  const avg = mults.reduce((a,b) => a+b, 0) / mults.length;
+  const variance = mults.reduce((a,b) => a+(b-avg)**2, 0) / mults.length;
+  const vol = Math.sqrt(variance) / avg;
+  const last5 = mults.slice(-5);
+  const lastAvg = last5.reduce((a,b) => a+b, 0) / last5.length;
+
+  let streak = 0;
+  for (let i = mults.length-1; i>=0; i--) { if (mults[i]<1.5) streak++; else break; }
+
+  const hasRecentHigh = last5.some(v => v >= 10);
+
+  let score = 50;
+  if (lastAvg < avg*0.8) score += 18;
+  if (streak >= 3)       score += 20;
+  if (streak >= 5)       score += 12;
+  if (hasRecentHigh)     score -= 28;
+  if (vol < 0.5)         score += 8;
+  if (avg < 2.0)         score += 10;
+  score = Math.max(5, Math.min(95, Math.round(score)));
+
+  let dec, icon, cls, sub, col;
+  if (score >= 70) {
+    dec='JOUER';      icon='✅'; cls='play'; col='var(--green)';
+    sub='Conditions favorables — entrée recommandée';
+  } else if (score >= 45) {
+    dec='JOUER SAFE'; icon='⚠️'; cls='safe'; col='var(--orange)';
+    sub='Risque modéré — cashout précoce conseillé';
+  } else {
+    dec='ATTENDRE';   icon='⏸'; cls='wait'; col='var(--red)';
+    sub='Volatilité élevée — patience recommandée';
+  }
+
+  const mise    = score>=70 ? (streak>=4?'5%':'3%') : score>=45 ? '2%' : '1%';
+  const cashout = '×' + Math.min(3.5, +(avg*0.85).toFixed(1));
+  const volStr  = (vol*100).toFixed(0)+'%';
+  const risk    = Math.min(99, Math.round((1-score/100)*100));
+  const rCol    = risk<35 ? 'var(--green)' : risk<65 ? 'var(--orange)' : 'var(--red)';
+
+  return { dec, icon, cls, sub, col, score, mise, cashout, volStr, streak, risk, rCol };
+}
+
+/* ══════════════════════════════════════════
+   RENDER DECISION (target = 'main' | 'ocr')
+══════════════════════════════════════════ */
+function renderDecision(r, target='main') {
+  if (!r) return;
+  const pre = target==='main' ? '' : 'ocr';
+  const card   = document.getElementById(pre ? 'ocrDecCard' : 'decCard');
+  const icon   = document.getElementById(pre ? 'ocrDIcon'   : 'dIcon');
+  const label  = document.getElementById(pre ? 'ocrDLabel'  : 'dLabel');
+  const sub    = document.getElementById(pre ? 'ocrDSub'    : 'dSub');
+  const snum   = document.getElementById(pre ? 'ocrSNum'    : 'sNum');
+  const sring  = document.getElementById(pre ? 'ocrScoreRing':'scoreRing');
+  const rfill  = document.getElementById(pre ? 'ocrRFill'   : 'rFill');
+  const rpct   = document.getElementById(pre ? 'ocrRPct'    : 'rPct');
+
+  card.className = 'decision-card ' + r.cls;
+  icon.textContent  = r.icon;
+  label.textContent = r.dec;
+  label.style.color = r.col;
+  sub.textContent   = r.sub;
+  snum.textContent  = r.score;
+  snum.style.color  = r.col;
+  sring.style.borderColor = r.col;
+  sring.style.boxShadow   = `0 0 14px ${r.col}40`;
+
+  if (target === 'main') {
+    document.getElementById('metRow').style.display = 'grid';
+    document.getElementById('riskRow').style.display = 'flex';
+    document.getElementById('m1').textContent = r.mise;
+    document.getElementById('m1').style.color = r.col;
+    document.getElementById('m2').textContent = r.cashout;
+    document.getElementById('m2').style.color = r.col;
+    document.getElementById('m3').textContent = r.volStr;
+    document.getElementById('m4').textContent = r.streak>0 ? r.streak+'×' : '0';
+    setTimeout(() => { document.getElementById('rFill').style.width = r.risk+'%'; }, 50);
+    document.getElementById('rFill').style.background = r.rCol;
+    document.getElementById('rPct').textContent = r.risk+'%';
+    document.getElementById('rPct').style.color = r.rCol;
+  } else {
+    document.getElementById('om1').textContent = r.mise;
+    document.getElementById('om1').style.color = r.col;
+    document.getElementById('om2').textContent = r.cashout;
+    document.getElementById('om2').style.color = r.col;
+    document.getElementById('om3').textContent = r.volStr;
+    document.getElementById('om4').textContent = r.streak>0 ? r.streak+'×' : '0';
+    setTimeout(() => { rfill.style.width = r.risk+'%'; }, 50);
+    rfill.style.background = r.rCol;
+    rpct.textContent = r.risk+'%';
+    rpct.style.color = r.rCol;
+  }
+}
+
+/* ══════════════════════════════════════════
+   TAB 1 — MANUAL
+══════════════════════════════════════════ */
+let mainChart = null;
+
+function parseMults(raw) {
+  return raw.split(/[\s,;]+/).map(parseFloat).filter(v => !isNaN(v) && v>=1.0 && v<=200);
+}
+
+function addM(v) {
+  const el = document.getElementById('multIn');
+  el.value = el.value.trim() ? el.value.trim()+', '+v : String(v);
+}
+
+function runManual() {
+  if (STATE.plan==='free' && STATE.analyses >= STATE.maxAnalyses) {
+    openModal(); toast('Limite FREE atteinte — passez PRO !','inf'); return;
+  }
+  const raw = document.getElementById('multIn').value.trim();
+  if (!raw) { toast('Entrez des multiplicateurs','inf'); return; }
+  const mults = parseMults(raw);
+  if (mults.length < 3) { toast('Minimum 3 multiplicateurs requis','err'); return; }
+
+  const btn = document.getElementById('btnAnalyze');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin-inline"></span> ANALYSE…';
+
+  setTimeout(() => {
+    const r = algoV2(mults);
+    if (!r) return;
+    renderDecision(r, 'main');
+    renderChart(mults);
+
+    STATE.analyses++;
+    updateStats(r);
+
+    STATE.history.unshift({
+      dec: r.dec, cls: r.cls,
+      vals: raw.substring(0,38),
+      time: timeNow()
+    });
+    renderHistory();
+
+    btn.disabled = false;
+    btn.innerHTML = '⚡ ANALYSER';
+    toast('Analyse : '+r.dec+' — Score '+r.score+'/100','ok');
+  }, 700);
+}
+
+function renderChart(mults) {
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  if (mainChart) mainChart.destroy();
+  const avg = mults.reduce((a,b)=>a+b,0)/mults.length;
+  mainChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: mults.map((_,i)=>'#'+(i+1)),
+      datasets:[{
+        data: mults, borderColor:'#00E676', backgroundColor:'rgba(0,230,118,.06)',
+        borderWidth:2, tension:0.35, fill:true,
+        pointRadius: mults.map(v=>v>=5?4:2),
+        pointBackgroundColor: mults.map(v=>v>=5?'#FF9800':v>=2?'#00E676':'#4B5563'),
+      },{
+        data: mults.map(()=>avg), borderColor:'rgba(76,139,245,.35)',
+        borderWidth:1, borderDash:[5,5], pointRadius:0, fill:false,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{
+        backgroundColor:'#0D1221', borderColor:'rgba(255,255,255,.07)', borderWidth:1,
+        titleColor:'#6B7280', bodyColor:'#00E676',
+        callbacks:{ label: c=>'×'+c.raw.toFixed(2) }
+      }},
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#4B5563',font:{family:'DM Mono',size:8}} },
+        y:{ grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#4B5563',font:{family:'DM Mono',size:8},callback:v=>'×'+v} }
+      }
+    }
+  });
+}
+
+function updateStats(r) {
+  document.getElementById('s1').textContent = STATE.analyses;
+  document.getElementById('s1sub').textContent = STATE.plan==='free' ? 'sur '+STATE.maxAnalyses+' restantes' : 'illimitées';
+  document.getElementById('s3').textContent = r.cashout;
+  document.getElementById('s4').textContent = r.risk+'%';
+  document.getElementById('s4').style.color = r.rCol;
+
+  const plays = STATE.history.filter(h=>h.cls==='play'||h.cls==='safe').length;
+  const rate  = STATE.history.length ? Math.round(plays/STATE.history.length*100) : 0;
+  document.getElementById('s2').textContent = rate+'%';
+  document.getElementById('s2').style.color = rate>=60?'var(--green)':rate>=40?'var(--orange)':'var(--red)';
+
+  // Compte tab
+  document.getElementById('acctAnl').textContent = STATE.analyses+' / '+(STATE.plan==='free'?STATE.maxAnalyses:'∞');
+  document.getElementById('acctOCR').textContent = STATE.ocrCount+' / '+(STATE.plan==='free'?STATE.maxOCR:'∞');
+}
+
+function renderHistory() {
+  const list = document.getElementById('histList');
+  if (!STATE.history.length) { list.innerHTML='<div style="text-align:center;color:var(--muted2);font-family:\'DM Mono\',monospace;font-size:11px;padding:16px">Aucune analyse</div>'; return; }
+  list.innerHTML = STATE.history.slice(0,15).map(h=>`
+    <div class="hist-item">
+      <span class="hist-badge ${h.cls==='play'?'hb-play':h.cls==='safe'?'hb-safe':'hb-wait'}">${h.dec}</span>
+      <span class="hist-vals">${h.vals}…</span>
+      <span class="hist-time">${h.time}</span>
+    </div>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════
+   TAB 2 — SCREENSHOT OCR
+══════════════════════════════════════════ */
+function handleImg(input) {
+  const f = input.files[0];
+  if (!f) return;
+  STATE.imgType = f.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = e => {
+    STATE.imgB64 = e.target.result.split(',')[1];
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('uploadEmpty').style.display = 'none';
+    document.getElementById('previewWrap').style.display = 'block';
+    document.getElementById('uploadZone').classList.add('has-file');
+    document.getElementById('btnScan').disabled = false;
+    hide('ocrResult'); hide('errCard'); hide('procCard');
+  };
+  reader.readAsDataURL(f);
+  input.value = '';
+}
+
+function resetImg() {
+  STATE.imgB64 = null;
+  document.getElementById('uploadEmpty').style.display = 'block';
+  document.getElementById('previewWrap').style.display = 'none';
+  document.getElementById('uploadZone').classList.remove('has-file');
+  document.getElementById('btnScan').disabled = true;
+}
+
+function setStep(n) {
+  for (let i=1;i<=4;i++) {
+    const el = document.getElementById('ps'+i);
+    const num = el.querySelector('.step-num');
+    el.classList.remove('on','ok');
+    if (i<n)       { el.classList.add('ok'); num.textContent='✓'; }
+    else if (i===n){ el.classList.add('on'); num.textContent=i; }
+    else           { num.textContent=i; }
+  }
+}
+
+async function runOCR() {
+  if (!STATE.imgB64) return;
+  if (STATE.plan==='free' && STATE.ocrCount >= STATE.maxOCR) {
+    openModal(); toast('Limite OCR FREE atteinte — passez PRO !','inf'); return;
+  }
+
+  show('procCard'); hide('ocrResult'); hide('errCard');
+  document.getElementById('btnScan').disabled = true;
+
+  try {
+    setStep(1); await delay(300);
+
+    const prompt = `Tu es expert en extraction de données visuelles pour jeux de casino Aviator (1xBet, Mostbet, Betwinner, etc).
+
+Analyse cette capture d'écran. Extrais UNIQUEMENT les multiplicateurs de l'historique visible.
+
+Règles :
+- Valeurs entre 1.00 et 200.00 uniquement
+- Ignore mises, soldes, boutons, interface
+- Si plusieurs séries visibles, prends la plus longue
+- Retourne UNIQUEMENT ce JSON valide, sans texte avant ou après :
+{"mults":[1.20,3.50,12.40,2.10],"confidence":0.92,"source":"1xBet Aviator","count":4}
+- Si rien détecté : {"mults":[],"confidence":0,"source":"inconnu","count":0}
+- confidence entre 0 et 1 selon clarté image
+- N'invente JAMAIS des valeurs, uniquement ce qui est lisible`;
+
+    setStep(2);
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:800,
+        messages:[{
+          role:'user',
+          content:[
+            { type:'image', source:{ type:'base64', media_type:STATE.imgType, data:STATE.imgB64 } },
+            { type:'text', text:prompt }
+          ]
+        }]
+      })
+    });
+
+    setStep(3);
+    if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(e?.error?.message||'Erreur API '+res.status); }
+
+    const data = await res.json();
+    const raw  = data.content?.find(b=>b.type==='text')?.text || '';
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    } catch {
+      const nums = raw.match(/\b\d{1,3}\.\d{1,2}\b/g)||[];
+      const vals = nums.map(Number).filter(v=>v>=1&&v<=200);
+      parsed = { mults:vals, confidence:0.5, source:'auto-extract', count:vals.length };
+    }
+
+    setStep(4); await delay(400);
+
+    if (!parsed.mults || parsed.mults.length < 2)
+      throw new Error('Aucun multiplicateur détectable. Assurez-vous que l\'historique Aviator est bien visible dans la capture.');
+
+    STATE.ocrMults = parsed.mults;
+    STATE.excluded.clear();
+    STATE.ocrCount++;
+    hide('procCard');
+    showOCRResult(parsed);
+    updateStats({});
+
+  } catch(err) {
+    hide('procCard');
+    document.getElementById('errMsg').textContent = err.message || 'Erreur inattendue.';
+    show('errCard');
+    document.getElementById('btnScan').disabled = false;
+  }
+}
+
+function showOCRResult(ocr) {
+  const conf = Math.round((ocr.confidence||0.8)*100);
+  const fill = document.getElementById('confFill');
+  fill.style.width = conf+'%';
+  fill.style.background = conf>=80?'var(--green)':conf>=60?'var(--orange)':'var(--red)';
+  document.getElementById('confVal').textContent = conf+'%';
+  document.getElementById('confVal').style.color = conf>=80?'var(--green)':conf>=60?'var(--orange)':'var(--red)';
+
+  renderChips();
+
+  const r = algoV2(getActiveOCR());
+  renderDecision(r, 'ocr');
+
+  show('ocrResult');
+  document.getElementById('btnScan').disabled = false;
+  toast('✅ '+STATE.ocrMults.length+' multiplicateurs extraits','ok');
+
+  setTimeout(() => document.getElementById('ocrResult').scrollIntoView({behavior:'smooth',block:'start'}), 100);
+}
+
+function renderChips() {
+  const wrap = document.getElementById('detectedChips');
+  wrap.innerHTML = STATE.ocrMults.map((v,i) => {
+    const cls = v>=5?'high':v>=2?'med':'low';
+    const ex  = STATE.excluded.has(i) ? ' excl' : '';
+    return `<span class="d-chip ${cls}${ex}" onclick="toggleChip(${i})">×${v.toFixed(2)}</span>`;
+  }).join('');
+  document.getElementById('chipCount').textContent = getActiveOCR().length;
+  document.getElementById('rawEdit').value = getActiveOCR().join(', ');
+}
+
+function toggleChip(i) {
+  if (STATE.excluded.has(i)) STATE.excluded.delete(i);
+  else STATE.excluded.add(i);
+  renderChips();
+  renderDecision(algoV2(getActiveOCR()), 'ocr');
+}
+
+function getActiveOCR() {
+  return STATE.ocrMults.filter((_,i) => !STATE.excluded.has(i));
+}
+
+function toggleEditMode() {
+  STATE.editMode = !STATE.editMode;
+  const ta = document.getElementById('rawEdit');
+  if (STATE.editMode) {
+    ta.classList.add('show');
+    ta.value = getActiveOCR().join(', ');
+  } else {
+    ta.classList.remove('show');
+    const vals = ta.value.split(/[\s,;]+/).map(parseFloat).filter(v=>!isNaN(v)&&v>=1&&v<=200);
+    if (vals.length >= 2) {
+      STATE.ocrMults = vals; STATE.excluded.clear();
+      renderChips();
+      renderDecision(algoV2(getActiveOCR()), 'ocr');
+      toast('Valeurs mises à jour','ok');
+    }
+  }
+}
+
+function reanalyzeOCR() {
+  if (STATE.editMode) toggleEditMode();
+  const mults = getActiveOCR();
+  if (mults.length<2) { toast('Minimum 2 multiplicateurs','err'); return; }
+  renderDecision(algoV2(mults), 'ocr');
+  toast('Analyse recalculée','ok');
+}
+
+/* ══════════════════════════════════════════
+   TAB 3 — SIMULATION
+══════════════════════════════════════════ */
+let simChart = null;
+
+function runSim() {
+  const N      = parseInt(document.getElementById('simN').value)||200;
+  const stake  = parseFloat(document.getElementById('simStake').value)||5000;
+  const cashout= parseFloat(document.getElementById('simCO').value)||2.0;
+
+  // Monte Carlo
+  const pWin = 1 / cashout * 0.97; // 3% edge maison
+  let capital = 0, maxLoss=0, wins=0;
+  const curve = [0];
+
+  for (let i=0; i<N; i++) {
+    if (Math.random() < pWin) { capital += stake*(cashout-1); wins++; }
+    else { capital -= stake; }
+    if (capital < maxLoss) maxLoss = capital;
+    curve.push(+capital.toFixed(0));
+  }
+
+  const roi = ((capital/(stake*N))*100).toFixed(1);
+
+  document.getElementById('simGain').textContent  = (capital>0?'+':'')+Math.round(capital).toLocaleString()+' F';
+  document.getElementById('simGain').style.color  = capital>=0?'var(--green)':'var(--red)';
+  document.getElementById('simPerte').textContent = Math.round(maxLoss).toLocaleString()+' F';
+  document.getElementById('simProba').textContent = Math.round(wins/N*100)+'%';
+  document.getElementById('simROI').textContent   = roi+'%';
+  document.getElementById('simROI').style.color   = parseFloat(roi)>=0?'var(--green)':'var(--red)';
+
+  document.getElementById('simGrid').style.display = 'grid';
+  document.getElementById('simChartCard').style.display = 'block';
+
+  // Chart courbe capital
+  const ctx = document.getElementById('simChart').getContext('2d');
+  if (simChart) simChart.destroy();
+  const labels = curve.map((_,i)=>i===0?'Départ':'#'+i);
+  const cols = curve.map(v=>v>=0?'rgba(0,230,118,.7)':'rgba(255,61,87,.7)');
+
+  simChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        data: curve, borderColor:'rgba(0,230,118,.6)',
+        backgroundColor: (ctx2) => {
+          const g = ctx2.chart.ctx.createLinearGradient(0,0,0,150);
+          g.addColorStop(0,'rgba(0,230,118,.15)'); g.addColorStop(1,'rgba(0,230,118,0)'); return g;
+        },
+        borderWidth:1.5, tension:0.3, fill:true, pointRadius:0,
+      },{
+        data: curve.map(()=>0), borderColor:'rgba(255,61,87,.3)',
+        borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#0D1221', borderColor:'rgba(255,255,255,.07)', borderWidth:1, bodyColor:'#00E676', callbacks:{label:c=>c.raw.toLocaleString()+' F'} }},
+      scales:{
+        x:{ display:false },
+        y:{ grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#4B5563',font:{family:'DM Mono',size:8},callback:v=>v.toLocaleString()} }
+      }
+    }
+  });
+
+  toast('Simulation '+N+' parties terminée','ok');
+}
+
+/* ══════════════════════════════════════════
+   COMPTE & PARRAINAGE
+══════════════════════════════════════════ */
+function copyRef() {
+  const code = document.getElementById('refCode').textContent;
+  navigator.clipboard?.writeText(code).catch(()=>{});
+  toast('Code '+code+' copié !','ok');
+}
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+function openModal()  { document.getElementById('modalBg').classList.add('open'); }
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+
+function selPlan(p) {
+  STATE.selectedPlan = p;
+  document.getElementById('cardPro').className = 'plan-card' + (p==='pro'?' sel-pro':'');
+  document.getElementById('cardVip').className = 'plan-card' + (p==='vip'?' sel-vip':'');
+}
+
+function doPay() {
+  toast('Redirection vers Chariow…','inf');
+  setTimeout(() => {
+    STATE.plan = STATE.selectedPlan;
+    const pills = document.querySelectorAll('.plan-pill, #planPill, #acctPlan');
+    pills.forEach(el => {
+      el.className = 'plan-pill plan-'+STATE.plan;
+      el.textContent = STATE.plan.toUpperCase();
+    });
+    STATE.maxAnalyses = Infinity;
+    STATE.maxOCR      = Infinity;
+    document.getElementById('s1sub').textContent = 'illimitées';
+    document.getElementById('acctAnl').textContent = STATE.analyses+' / ∞';
+    document.getElementById('acctOCR').textContent = STATE.ocrCount+' / ∞';
+
+    // Demo referral
+    document.getElementById('refF').textContent = '3';
+    document.getElementById('refE').textContent = '4 500 F';
+    document.getElementById('refP').textContent = '1 500 F';
+
+    closeModal();
+    toast('Plan '+STATE.plan.toUpperCase()+' activé — Bienvenue ! 🎉','ok');
+  }, 1400);
+}
+
+/* ══════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════ */
+function show(id) { const el=document.getElementById(id); el.style.display='block'; el.classList.add('show'); }
+function hide(id) { const el=document.getElementById(id); el.style.display='none';  el.classList.remove('show'); }
+function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+function timeNow() { const d=new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+
+function toast(msg, type='ok') {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast show '+type;
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.className='toast',3000);
+}
+
+// Drag & drop sur zone upload
+const uz = document.getElementById('uploadZone');
+uz.addEventListener('dragover', e=>{ e.preventDefault(); uz.classList.add('drag-over'); });
+uz.addEventListener('dragleave', ()=>uz.classList.remove('drag-over'));
+uz.addEventListener('drop', e=>{
+  e.preventDefault(); uz.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) {
+    // Simuler un input
+    STATE.imgType=f.type;
+    const r=new FileReader();
+    r.onload=ev=>{
+      STATE.imgB64=ev.target.result.split(',')[1];
+      document.getElementById('previewImg').src=ev.target.result;
+      document.getElementById('uploadEmpty').style.display='none';
+      document.getElementById('previewWrap').style.display='block';
+      uz.classList.add('has-file');
+      document.getElementById('btnScan').disabled=false;
+    };
+    r.readAsDataURL(f);
+  }
+});
+
+// Préremplir démo
+setTimeout(()=>{ document.getElementById('multIn').value='1.2, 3.5, 1.8, 12.4, 2.1, 1.4, 8.7, 1.1, 4.2, 2.8'; }, 400);
+</script>
+</body>
+</html>
